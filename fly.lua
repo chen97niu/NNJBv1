@@ -1,4 +1,4 @@
--- 手机飞行菜单（带UI按钮）
+-- 手机飞行菜单（修复版：显示更稳定）
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
@@ -6,7 +6,6 @@ local rootPart = character:WaitForChild("HumanoidRootPart")
 local uis = game:GetService("UserInputService")
 local rs = game:GetService("RunService")
 
--- ========== 配置 ==========
 local flying = false
 local currentSpeed = 1
 local flySpeeds = {39, 50, 100, 500, 2000}
@@ -15,18 +14,18 @@ local flySpeed = flySpeeds[currentSpeed]
 local bodyVelocity = Instance.new("BodyVelocity")
 bodyVelocity.MaxForce = Vector3.new(1, 1, 1) * 100000
 
--- ========== 创建UI ==========
+-- ========== 创建UI（放到CoreGui更稳定） ==========
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "FlyMenu"
-screenGui.Parent = player.PlayerGui
+screenGui.Parent = game:GetService("CoreGui")  -- 改成CoreGui
 screenGui.ResetOnSpawn = false
 
--- 主按钮（圆形，红色，半透明）
+-- 主按钮（红色圆形，完全不透明）
 local mainBtn = Instance.new("ImageButton")
 mainBtn.Size = UDim2.new(0, 60, 0, 60)
 mainBtn.Position = UDim2.new(0.85, -30, 0.15, 0)
 mainBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-mainBtn.BackgroundTransparency = 0.2
+mainBtn.BackgroundTransparency = 0  -- 完全不透明
 mainBtn.BorderSizePixel = 0
 mainBtn.Parent = screenGui
 
@@ -48,7 +47,7 @@ local menu = Instance.new("Frame")
 menu.Size = UDim2.new(0, 220, 0, 280)
 menu.Position = UDim2.new(0.5, -110, 0.5, -140)
 menu.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
-menu.BackgroundTransparency = 0.05
+menu.BackgroundTransparency = 0
 menu.BorderSizePixel = 0
 menu.Visible = false
 menu.Parent = screenGui
@@ -57,7 +56,6 @@ local menuCorner = Instance.new("UICorner")
 menuCorner.CornerRadius = UDim.new(0, 12)
 menuCorner.Parent = menu
 
--- 标题
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 40)
 title.BackgroundTransparency = 1
@@ -67,7 +65,6 @@ title.TextSize = 20
 title.Font = Enum.Font.GothamBold
 title.Parent = menu
 
--- 飞行开关按钮
 local toggleBtn = Instance.new("TextButton")
 toggleBtn.Size = UDim2.new(0.8, 0, 0, 45)
 toggleBtn.Position = UDim2.new(0.1, 0, 0, 50)
@@ -81,7 +78,6 @@ local toggleCorner = Instance.new("UICorner")
 toggleCorner.CornerRadius = UDim.new(0, 8)
 toggleCorner.Parent = toggleBtn
 
--- 速度显示
 local speedText = Instance.new("TextLabel")
 speedText.Size = UDim2.new(0.8, 0, 0, 30)
 speedText.Position = UDim2.new(0.1, 0, 0, 105)
@@ -92,7 +88,6 @@ speedText.TextSize = 16
 speedText.Font = Enum.Font.Gotham
 speedText.Parent = menu
 
--- 速度档位按钮（5个横向排列）
 local speedContainer = Instance.new("Frame")
 speedContainer.Size = UDim2.new(0.9, 0, 0, 40)
 speedContainer.Position = UDim2.new(0.05, 0, 0, 140)
@@ -121,7 +116,6 @@ for i = 1, 5 do
         currentSpeed = i
         flySpeed = flySpeeds[currentSpeed]
         speedText.Text = "速度: " .. currentSpeed .. "档 (" .. flySpeed .. ")"
-        
         for j, b in pairs(speedBtns) do
             if j == currentSpeed then
                 b.BackgroundColor3 = Color3.fromRGB(255, 100, 0)
@@ -129,15 +123,11 @@ for i = 1, 5 do
                 b.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
             end
         end
-        
-        if flying then
-            print("[飞行] 速度切换至 " .. flySpeed)
-        end
+        if flying then print("[飞行] 速度切换至 " .. flySpeed) end
     end)
 end
 speedBtns[1].BackgroundColor3 = Color3.fromRGB(255, 100, 0)
 
--- 关闭菜单按钮（×）
 local closeBtn = Instance.new("TextButton")
 closeBtn.Size = UDim2.new(0, 30, 0, 30)
 closeBtn.Position = UDim2.new(1, -35, 0, 5)
@@ -152,20 +142,17 @@ closeCorner.CornerRadius = UDim.new(1, 0)
 closeCorner.Parent = closeBtn
 
 -- ========== 功能逻辑 ==========
--- 开关菜单
 local menuOpen = false
 mainBtn.MouseButton1Click:Connect(function()
     menuOpen = not menuOpen
     menu.Visible = menuOpen
 end)
 
--- 关闭按钮
 closeBtn.MouseButton1Click:Connect(function()
     menu.Visible = false
     menuOpen = false
 end)
 
--- 飞行开关
 toggleBtn.MouseButton1Click:Connect(function()
     flying = not flying
     if flying then
@@ -181,7 +168,6 @@ toggleBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 拖动主按钮
 local dragging = false
 local dragStart, btnStart
 
@@ -206,11 +192,9 @@ uis.InputChanged:Connect(function(input)
     end
 end)
 
--- ========== 移动控制 ==========
 local function getMoveDirection()
     local camera = workspace.CurrentCamera
     local moveDir = Vector3.new(0, 0, 0)
-    
     local camForward = camera.CFrame.LookVector
     local camRight = camera.CFrame.RightVector
     camForward = Vector3.new(camForward.X, 0, camForward.Z).Unit
@@ -238,4 +222,4 @@ rs.RenderStepped:Connect(function()
     end
 end)
 
-print("✅ 飞行菜单加载完成！点击屏幕上的红色【飞】按钮")
+print("✅ 飞行菜单加载完成！点击红色【飞】按钮")
