@@ -1,4 +1,4 @@
--- 手机飞行脚本（宋体「本」字 + 彩色流光）
+-- 手机飞行脚本（摇杆方向已修复）
 local player = game.Players.LocalPlayer
 local char = player.Character or player.CharacterAdded:Wait()
 local hum = char:WaitForChild("Humanoid")
@@ -21,7 +21,7 @@ screenGui.Name = "FlyUI"
 screenGui.Parent = game:GetService("CoreGui")
 screenGui.ResetOnSpawn = false
 
--- ========== 主按钮（宋体「本」字 + 彩色流光边框） ==========
+-- ========== 主按钮 ==========
 local mainBtn = Instance.new("ImageButton")
 mainBtn.Size = UDim2.new(0, 70, 0, 70)
 mainBtn.Position = UDim2.new(0.85, -35, 0.15, 0)
@@ -30,18 +30,15 @@ mainBtn.BackgroundTransparency = 0
 mainBtn.BorderSizePixel = 0
 mainBtn.Parent = screenGui
 
--- 圆角
 local btnCorner = Instance.new("UICorner")
 btnCorner.CornerRadius = UDim.new(1, 0)
 btnCorner.Parent = mainBtn
 
--- 彩色流光边框（UIStroke）
 local border = Instance.new("UIStroke")
 border.Thickness = 3
 border.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 border.Parent = mainBtn
 
--- 流光颜色动画
 local colors = {
     Color3.fromRGB(255, 0, 0),
     Color3.fromRGB(255, 165, 0),
@@ -60,14 +57,13 @@ task.spawn(function()
     end
 end)
 
--- 按钮文字（宋体「本」）
 local btnText = Instance.new("TextLabel")
 btnText.Size = UDim2.new(1, 0, 1, 0)
 btnText.BackgroundTransparency = 1
 btnText.Text = "本"
 btnText.TextColor3 = Color3.fromRGB(255, 255, 255)
 btnText.TextSize = 32
-btnText.Font = Enum.Font.SourceSans  -- Roblox没有宋体，用SourceSans替代
+btnText.Font = Enum.Font.SourceSans
 btnText.TextScaled = true
 btnText.Parent = mainBtn
 
@@ -85,7 +81,6 @@ local menuCorner = Instance.new("UICorner")
 menuCorner.CornerRadius = UDim.new(0, 12)
 menuCorner.Parent = menu
 
--- 菜单标题
 local menuTitle = Instance.new("TextLabel")
 menuTitle.Size = UDim2.new(1, 0, 0, 35)
 menuTitle.BackgroundTransparency = 1
@@ -95,7 +90,6 @@ menuTitle.TextSize = 18
 menuTitle.Font = Enum.Font.GothamBold
 menuTitle.Parent = menu
 
--- 飞行开关按钮（菜单里的功能）
 local flyToggle = Instance.new("TextButton")
 flyToggle.Size = UDim2.new(0.8, 0, 0, 45)
 flyToggle.Position = UDim2.new(0.1, 0, 0, 45)
@@ -109,7 +103,6 @@ local toggleCorner = Instance.new("UICorner")
 toggleCorner.CornerRadius = UDim.new(0, 8)
 toggleCorner.Parent = flyToggle
 
--- 关闭菜单按钮
 local closeBtn = Instance.new("TextButton")
 closeBtn.Size = UDim2.new(0, 30, 0, 30)
 closeBtn.Position = UDim2.new(1, -35, 0, 5)
@@ -126,19 +119,16 @@ closeCorner2.Parent = closeBtn
 -- ========== 功能逻辑 ==========
 local menuOpen = false
 
--- 点击主按钮开关菜单
 mainBtn.MouseButton1Click:Connect(function()
     menuOpen = not menuOpen
     menu.Visible = menuOpen
 end)
 
--- 关闭菜单
 closeBtn.MouseButton1Click:Connect(function()
     menu.Visible = false
     menuOpen = false
 end)
 
--- 飞行开关
 flyToggle.MouseButton1Click:Connect(function()
     flying = not flying
     if flying then
@@ -181,7 +171,7 @@ uis.InputChanged:Connect(function(input)
     end
 end)
 
--- ========== 飞行控制 ==========
+-- ========== 飞行控制（摇杆方向已反转） ==========
 local function getDir()
     local cam = workspace.CurrentCamera
     if not cam then return Vector3.new(0, 0, 0) end
@@ -194,9 +184,11 @@ local function getDir()
     
     local stick = hum.MoveDirection
     if stick.Magnitude > 0.1 then
-        dir = charForward * stick.Z + charRight * stick.X
+        -- 🔧 修复：Z轴取反（上推变前进，下拉变后退）
+        dir = charForward * (-stick.Z) + charRight * stick.X
     end
     
+    -- 上下飞行：视角控制
     local lookY = cam.CFrame.LookVector.Y
     if lookY > 0.4 then
         dir = dir + Vector3.new(0, 1, 0)
@@ -217,3 +209,4 @@ rs.RenderStepped:Connect(function()
 end)
 
 print("✅ 飞行加载完成！点击「本」按钮打开菜单")
+print("📱 摇杆上推=前进 | 下拉=后退 | 左右=转向")
