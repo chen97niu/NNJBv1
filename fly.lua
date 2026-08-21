@@ -1,4 +1,4 @@
--- 手机飞行脚本（按钮开启/关闭）
+-- 手机飞行脚本（摇杆移动 + 滑动视角）
 local player = game.Players.LocalPlayer
 local char = player.Character or player.CharacterAdded:Wait()
 local hum = char:WaitForChild("Humanoid")
@@ -12,7 +12,6 @@ local bodyVel = Instance.new("BodyVelocity")
 bodyVel.MaxForce = Vector3.new(1, 1, 1) * 100000
 
 -- ========== 创建UI ==========
--- 先删除旧的
 if game:GetService("CoreGui"):FindFirstChild("FlyUI") then
     game:GetService("CoreGui"):FindFirstChild("FlyUI"):Destroy()
 end
@@ -22,7 +21,7 @@ screenGui.Name = "FlyUI"
 screenGui.Parent = game:GetService("CoreGui")
 screenGui.ResetOnSpawn = false
 
--- 飞行按钮（屏幕右下角，半透明，方便点击）
+-- 飞行按钮
 local flyBtn = Instance.new("ImageButton")
 flyBtn.Size = UDim2.new(0, 80, 0, 80)
 flyBtn.Position = UDim2.new(0.85, -40, 0.85, -40)
@@ -45,7 +44,7 @@ btnText.TextSize = 28
 btnText.Font = Enum.Font.GothamBold
 btnText.Parent = flyBtn
 
--- 状态文字（显示在按钮下方）
+-- 状态文字
 local statusText = Instance.new("TextLabel")
 statusText.Size = UDim2.new(0, 100, 0, 30)
 statusText.Position = UDim2.new(0.85, -50, 0.85, 50)
@@ -101,7 +100,6 @@ uis.InputChanged:Connect(function(input)
     if dragging and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
         local delta = input.Position - dragStart
         flyBtn.Position = UDim2.new(btnStart.X.Scale, btnStart.X.Offset + delta.X, btnStart.Y.Scale, btnStart.Y.Offset + delta.Y)
-        -- 状态文字跟着按钮移动
         statusText.Position = UDim2.new(flyBtn.Position.X.Scale, flyBtn.Position.X.Offset - 10, flyBtn.Position.Y.Scale, flyBtn.Position.Y.Offset + 85)
     end
 end)
@@ -112,22 +110,26 @@ local function getDir()
     if not cam then return Vector3.new(0, 0, 0) end
     
     local dir = Vector3.new(0, 0, 0)
-    local forward = cam.CFrame.LookVector
-    local right = cam.CFrame.RightVector
-    forward = Vector3.new(forward.X, 0, forward.Z).Unit
-    right = Vector3.new(right.X, 0, right.Z).Unit
     
-    -- 摇杆控制前后左右
+    -- 获取人物面朝方向（不是相机方向）
+    local charForward = root.CFrame.LookVector
+    local charRight = root.CFrame.RightVector
+    charForward = Vector3.new(charForward.X, 0, charForward.Z).Unit
+    charRight = Vector3.new(charRight.X, 0, charRight.Z).Unit
+    
+    -- 摇杆控制（相对于人物面朝方向）
     local stick = hum.MoveDirection
     if stick.Magnitude > 0.1 then
-        dir = forward * stick.Z + right * stick.X
+        -- stick.Z: 正=前（摇杆上推），负=后（摇杆下拉）
+        -- stick.X: 正=右，负=左
+        dir = charForward * stick.Z + charRight * stick.X
     end
     
-    -- 视角控制上下（看天↑，看地↓）
-    local up = cam.CFrame.LookVector.Y
-    if up > 0.3 then
+    -- 上下飞行：用视角控制（看天↑，看地↓）
+    local lookY = cam.CFrame.LookVector.Y
+    if lookY > 0.4 then
         dir = dir + Vector3.new(0, 1, 0)
-    elseif up < -0.3 then
+    elseif lookY < -0.4 then
         dir = dir + Vector3.new(0, -1, 0)
     end
     
@@ -143,4 +145,5 @@ rs.RenderStepped:Connect(function()
     end
 end)
 
-print("✅ 手机飞行加载完成！点击右下角【飞】按钮")
+print("✅ 飞行加载完成！点击右下角【飞】按钮")
+print("📱 摇杆控制前后左右 | 滑动屏幕转头")
